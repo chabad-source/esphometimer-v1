@@ -1,0 +1,236 @@
+esphome:
+  name: timer-esp32-dev
+  friendly_name: timer-esp32-dev
+  includes:
+    - header-files/timer.h
+  on_boot:
+    - priority: 800                      # This is where all hardware initialization of vital components is executed
+      then:
+        - lambda: |-
+            setTimestamps();
+
+esp32:
+  board: esp32doit-devkit-v1
+  
+wifi:
+  ssid:     !secret wifi_ssid5
+  password: !secret wifi_password5
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "esp32-dev Fallback Hotspot"
+    password: ""
+ 
+logger:
+captive_portal:
+api:
+ota:
+web_server:
+  port: 80
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: America/New_York
+
+sun:
+  id: mysun
+  latitude: 40.669000
+  longitude: -73.942770
+
+interval:
+  - interval: 1min
+    then:
+      - lambda: |-
+          onInterval();
+
+globals:
+  - id: global_timer
+    type: uint8_t[20][17]
+    restore_value: no # switch to yes for deployment
+  - id: global_last_run
+    type: time_t[20]
+    restore_value: no # switch to yes for deployment
+  - id: global_next_run
+    type: time_t[20]
+    restore_value: no
+
+# /***************************************************
+# *      ***** Timer Format Cheat Guide *****
+# * **************************************************
+# *              ***** Switches *****
+# *   *** Value set to '1' enabled '0' disabled ***
+# * 0 = Enabled
+# * 1-7 = Days (sun-sat)
+# * 8 = Repeat
+# * 9 = Negative Offset
+# *               ***** Numbers *****
+# * 10 = Time hour
+# * 11 = Time minute
+# * 12 = Output  {value '0' for the first position of switch in the 'relays' variable}
+# * 13 = Action  {'0' turn off, '1' turn on, '2' toggle}
+# * 14 = Offset hour
+# * 15 = Offset minute
+# * 16 = Mode    {'0' use time, '1' use sunrise, '2' use sunset} 
+# ****************************************************/
+
+number:
+  - platform: template
+    name: "79 Timer Time Hour"
+    id: time_hour
+    optimistic: true
+    min_value: 0
+    max_value: 23
+    step: 1
+    mode: box
+    unit_of_measurement: hours
+  - platform: template
+    name: "80 Timer Time Minute"
+    id: time_minute
+    optimistic: true
+    min_value: 0
+    max_value: 59
+    step: 1
+    mode: box
+    unit_of_measurement: minutes
+  - platform: template
+    name: "89 Timer Output"
+    id: output
+    optimistic: true
+    initial_value: 0
+    min_value: 0
+    max_value: 1
+    step: 1
+  - platform: template
+    name: "90 Timer Action"
+    id: action
+    optimistic: true
+    min_value: 0
+    max_value: 2
+    step: 1
+  - platform: template
+    name: "91 Timer Offset Hour"
+    id: offset_hour
+    optimistic: true
+    min_value: 0
+    max_value: 11
+    step: 1
+    mode: box
+    unit_of_measurement: hours
+  - platform: template
+    name: "92 Timer Offset Minute"
+    id: offset_minute
+    optimistic: true
+    min_value: 0
+    max_value: 59
+    step: 1
+    mode: box
+    unit_of_measurement: minutes
+  - platform: template
+    name: "94 Timer Mode"
+    id: mode
+    optimistic: true
+    min_value: 0
+    max_value: 2
+    step: 1
+
+switch:
+  - platform: gpio
+    name: Built-in LED
+    id: relay_0
+    pin: 2
+    inverted: false
+  - platform: gpio
+    name: Relay 1
+    id: relay_1
+    pin: 4
+    inverted: false
+
+  - platform: template
+    name: 78 Timer Enabled
+    id: enabled
+    optimistic : true
+
+  - platform: template
+    name: 81 Timer Sunday
+    id: sunday
+    optimistic : true
+  - platform: template
+    name: 82 Timer Monday
+    id: monday
+    optimistic : true
+  - platform: template
+    name: 83 Timer Tuesday
+    id: tuesday
+    optimistic : true
+  - platform: template
+    name: 84 Timer Wednesday
+    id: wednesday
+    optimistic : true
+  - platform: template
+    name: 85 Timer Thursday
+    id: thursday
+    optimistic : true
+  - platform: template
+    name: 86 Timer Friday
+    id: friday
+    optimistic : true
+  - platform: template
+    name: 87 Timer Saturday
+    id: saturday
+    optimistic : true
+
+  - platform: template
+    name: 88 Timer Repeat
+    id: repeat
+    optimistic : true
+  - platform: template
+    name: 93 Timer Negative Offset
+    id: negative_offset
+    optimistic : true
+
+  - platform: template
+    name: Override Timer
+    id: override_timer
+    optimistic : true
+
+select:
+  - platform: template
+    id: select_timer
+    name: "77 Timer Select"
+    optimistic : true
+    options: 
+      - -- Select --
+      - Timer 1
+      - Timer 2
+      - Timer 3
+      - Timer 4
+      - Timer 5
+      - Timer 6
+      - Timer 7
+      - Timer 8
+      - Timer 9
+      - Timer 10
+      - Timer 11
+      - Timer 12
+      - Timer 13
+      - Timer 14
+      - Timer 15
+      - Timer 16
+      - Timer 17
+      - Timer 18
+      - Timer 19
+      - Timer 20
+    on_value:
+      - lambda: |-
+          onSelect(x);
+
+button:
+  - platform: template
+    name: 76 Timer Save
+    on_press:
+      - lambda: |-
+          onPressSave();
+
+  - platform: restart
+    name: "Restart"
