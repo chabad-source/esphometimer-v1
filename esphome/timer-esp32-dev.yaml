@@ -32,6 +32,13 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: America/New_York
+    on_time:
+      - seconds: 0
+        minutes: 0
+        hours: 0
+        then:
+          - lambda: |-
+              setTimestamps();
 
 sun:
   id: mysun
@@ -47,10 +54,10 @@ interval:
 globals:
   - id: global_timer
     type: uint8_t[20][17]
-    restore_value: no # switch to yes for deployment
+    restore_value: yes # switch to yes for deployment
   - id: global_last_run
     type: time_t[20]
-    restore_value: no # switch to yes for deployment
+    restore_value: yes # switch to yes for deployment
   - id: global_next_run
     type: time_t[20]
     restore_value: no
@@ -76,63 +83,74 @@ globals:
 
 number:
   - platform: template
-    name: "79 Timer Time Hour"
+    name: "83 Timer Time Hour"
     id: time_hour
     optimistic: true
+    restore_value: false
     min_value: 0
     max_value: 23
     step: 1
+    unit_of_measurement: Hours
     mode: box
-    unit_of_measurement: hours
   - platform: template
-    name: "80 Timer Time Minute"
+    name: "84 Timer Time Minute"
     id: time_minute
     optimistic: true
+    restore_value: false
     min_value: 0
     max_value: 59
     step: 1
+    unit_of_measurement: Minutes
     mode: box
-    unit_of_measurement: minutes
   - platform: template
-    name: "89 Timer Output"
+    name: "93 Timer Output"
     id: output
     optimistic: true
+    restore_value: false
     initial_value: 0
     min_value: 0
     max_value: 1
     step: 1
+    unit_of_measurement: Relay Position
+    mode: box
   - platform: template
-    name: "90 Timer Action"
+    name: "94 Timer Action"
     id: action
     optimistic: true
+    restore_value: false
     min_value: 0
     max_value: 2
     step: 1
+    mode: box
   - platform: template
-    name: "91 Timer Offset Hour"
+    name: "95 Timer Offset Hour"
     id: offset_hour
     optimistic: true
+    restore_value: false
     min_value: 0
     max_value: 11
     step: 1
+    unit_of_measurement: Hours
     mode: box
-    unit_of_measurement: hours
   - platform: template
-    name: "92 Timer Offset Minute"
+    name: "96 Timer Offset Minute"
     id: offset_minute
     optimistic: true
+    restore_value: false
     min_value: 0
     max_value: 59
     step: 1
+    unit_of_measurement: Minutes
     mode: box
-    unit_of_measurement: minutes
   - platform: template
-    name: "94 Timer Mode"
+    name: "98 Timer Mode"
     id: mode
     optimistic: true
+    restore_value: false
     min_value: 0
     max_value: 2
     step: 1
+    mode: box
 
 switch:
   - platform: gpio
@@ -140,65 +158,80 @@ switch:
     id: relay_0
     pin: 2
     inverted: false
+    restore_mode: RESTORE_DEFAULT_OFF
   - platform: gpio
     name: Relay 1
     id: relay_1
     pin: 4
     inverted: false
+    restore_mode: RESTORE_DEFAULT_OFF
 
   - platform: template
-    name: 78 Timer Enabled
+    name: 82 Timer Enabled
     id: enabled
     optimistic : true
+    restore_mode: ALWAYS_OFF
 
   - platform: template
-    name: 81 Timer Sunday
+    name: 86 Timer Sunday
     id: sunday
     optimistic : true
+    restore_mode: ALWAYS_OFF
   - platform: template
-    name: 82 Timer Monday
+    name: 87 Timer Monday
     id: monday
     optimistic : true
+    restore_mode: ALWAYS_OFF
   - platform: template
-    name: 83 Timer Tuesday
+    name: 88 Timer Tuesday
     id: tuesday
     optimistic : true
+    restore_mode: ALWAYS_OFF
   - platform: template
-    name: 84 Timer Wednesday
+    name: 89 Timer Wednesday
     id: wednesday
     optimistic : true
+    restore_mode: ALWAYS_OFF
   - platform: template
-    name: 85 Timer Thursday
+    name: 90 Timer Thursday
     id: thursday
     optimistic : true
+    restore_mode: ALWAYS_OFF
   - platform: template
-    name: 86 Timer Friday
+    name: 91 Timer Friday
     id: friday
     optimistic : true
+    restore_mode: ALWAYS_OFF
   - platform: template
-    name: 87 Timer Saturday
+    name: 92 Timer Saturday
     id: saturday
     optimistic : true
+    restore_mode: ALWAYS_OFF
 
   - platform: template
-    name: 88 Timer Repeat
+    name: 85 Timer Repeat
     id: repeat
     optimistic : true
+    restore_mode: ALWAYS_OFF
   - platform: template
-    name: 93 Timer Negative Offset
+    name: 97 Timer Negative Offset
     id: negative_offset
     optimistic : true
+    restore_mode: ALWAYS_OFF
 
   - platform: template
-    name: Override Timer
+    name: 99 Timer Override
     id: override_timer
     optimistic : true
+    restore_mode: ALWAYS_OFF
 
 select:
   - platform: template
     id: select_timer
-    name: "77 Timer Select"
+    name: "80 Timer Select"
     optimistic : true
+    restore_value: false
+    initial_option: -- Select --
     options: 
       - -- Select --
       - Timer 1
@@ -227,7 +260,7 @@ select:
 
 button:
   - platform: template
-    name: 76 Timer Save
+    name: 81 Timer Save
     on_press:
       - lambda: |-
           onPressSave();
