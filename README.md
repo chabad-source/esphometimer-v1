@@ -12,8 +12,8 @@ This project is using [ESPHome](https://esphome.io/).
 
 ## Features
 -   [x] Features 20 updatable timers.
--   [x] Can set repeatable timers based on the day of the week.
--   [x] Can detect missed timers and restore the latest timers value.
+-   [x] Set repeatable timers based on the day of the week.
+-   [x] Auto detect missed timers and restore the latest timers value.
 -   [x] Includes quick override option.
 -   [x] All running locally, no reliance on another server.
 
