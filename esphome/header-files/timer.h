@@ -70,17 +70,26 @@ void doRelayAction(uint8_t i, time_t timestamp, bool set_relays) {
     }
 }
 
-void setTimestamps() {
+void setTimestamps(uint8_t set_timer = 100) {
+    uint8_t i = 0;
+    uint8_t loops = 20;
+    if(set_timer != 100) {
+        i = set_timer;
+        loops = set_timer + 1;
+        ESP_LOGD("setTimestamps", "------ updating timer %i ------", set_timer + 1);
+    } else {
+        ESP_LOGD("setTimestamps", "------ updating all timers ------");
+    }
     // set variables
     esphome::ESPTime date = id(sntp_time).now();
     struct tm tm;
     time_t timestamp = 0;
     // loop timers
-    for(uint8_t i = 0; i < 20; i++) {
+    for(; i < loops; i++) {
         if(id(global_timer)[i][0] == 1) {
             // either repeat is disabled [position 8] or todays day of week is enabled [position 1-7]
             if(id(global_timer)[i][8] == 0 || id(global_timer)[i][0 + date.day_of_week] == 1) {
-                ESP_LOGD("setTimestamps", "------ Active Timer %i is set to run today ------"), i + 1;
+                ESP_LOGD("setTimestamps", "------ Active Timer %i is set to run today ------", i + 1);
                 ESP_LOGD("setTimestamps", "------ timestamp today %lu ------", date.timestamp);
                 // check timer mode [position 16] (time, sunrise etc.)
                 if(id(global_timer)[i][16] == 0) {
@@ -122,12 +131,12 @@ void setTimestamps() {
             } else {
                 // timer not avalible for today set to 0
                 id(global_next_run)[i] = 0;
-                ESP_LOGD("setTimestamps", "------ Active Timer %i is not set to run today ------"), i + 1;
+                // ESP_LOGD("setTimestamps", "------ Active Timer %i is not set to run today ------", i + 1);
             }
         } else {       
             // timer disabled set to 0
             id(global_next_run)[i] = 0;
-            ESP_LOGD("setTimestamps", "------ Inactive Timer %i ------"), i + 1;
+            // ESP_LOGD("setTimestamps", "------ Inactive Timer %i ------", i + 1);
         }
     }
 } // setTimestamps
@@ -145,8 +154,8 @@ void onInterval() {
     // loop all 20 timer timestamps
     for (uint8_t i = 0; i < 20; i++) {
         if(id(global_next_run)[i] > 0) {   // check if timer is active
-            ESP_LOGD("interval", "------ Timer %i Active ------", i + 1);
-            ESP_LOGD("interval", "------ Current Time %lu Next Run Time %lu Last Run Time %lu ------", date.timestamp, id(global_next_run)[i], id(global_last_run)[i]);
+            // ESP_LOGD("interval", "------ Timer %i Active ------", i + 1);
+            // ESP_LOGD("interval", "------ Current Time %lu Next Run Time %lu Last Run Time %lu ------", date.timestamp, id(global_next_run)[i], id(global_last_run)[i]);
             if(id(global_next_run)[i] == date.timestamp) { // check if time matche
                 ESP_LOGD("interval", "------ Timer %i matches current time ------", i + 1);
                 doRelayAction(i, date.timestamp, true);
@@ -154,14 +163,14 @@ void onInterval() {
         } else if(id(global_next_run)[i] > 0 && id(global_next_run)[i] < date.timestamp && id(global_last_run)[i] < (date.timestamp - 86340)) {
             // timer time is before current time and the latest time ran is more the 23h59m ago
             ESP_LOGD("interval", "------ Timer %i not matched - Missed timer ------", i + 1);
-            // uint8_t size_array = sizeof(global_missed_timers);
             // add timestamp to list of missed timers
             global_missed_timers[i] = id(global_next_run)[i];
             is_missed_timer = true;
         } else {
-            ESP_LOGD("interval", "------ Timer %i not active ------", i + 1);
+            // ESP_LOGD("interval", "------ Timer %i not active ------", i + 1);
             // time not active
             global_missed_timers[i] = 0;
+
         }
     }
     if(is_missed_timer == true) {
@@ -175,11 +184,11 @@ void onInterval() {
         // set the current values of the relays
         for (uint8_t i = 0; i < num_of_relays; i++) {
             temp_relays[i] = (*relays[i])->state;
-            ESP_LOGD("interval", "------ Set default state for relay %i ------", i);
+            // ESP_LOGD("interval", "------ Set default state for relay %i ------", i);
         }
         // set the tem relays with the result of the timer sequence
         for (uint8_t i = 0; i < 20; i++) {
-            ESP_LOGD("interval", "------ loop index %i ------", index[i]);
+            // ESP_LOGD("interval", "------ loop index %i ------", index[i]);
             // use the sorted index location so we do the actions in the order the timer was set for them
             if(global_missed_timers[index[i]] > 0) {
                 // do action without really setting relays
@@ -213,7 +222,7 @@ void onInterval() {
 
 void onSelect(std::string x) {
     ESP_LOGD("onSelect", "------ Ran onSelect ------");
-    ESP_LOGD("onSelect", "%s", x.c_str());
+    // ESP_LOGD("onSelect", "%s", x.c_str());
     uint8_t num_timer = 0;
     if(x == "-- Select --") {
         num_timer = 0;
@@ -259,19 +268,19 @@ void onSelect(std::string x) {
         num_timer = 20;
     }
     ESP_LOGD("onSelect", "------ Timer %i Selected ------", num_timer);
-    ESP_LOGD("onSelect", "------ Timer %i last run at %lu next run at %lu ------", num_timer, id(global_last_run)[num_timer - 1], id(global_next_run)[num_timer - 1]);
+    // ESP_LOGD("onSelect", "------ Timer %i last run at %lu next run at %lu ------", num_timer, id(global_last_run)[num_timer - 1], id(global_next_run)[num_timer - 1]);
     if(num_timer > 0) {
         // set num_timer to be base on position starting from 0
         num_timer -= 1;
         // set all the switches states
         for (uint8_t i = 0; i < 10; i++) {
             (*switches[i])->publish_state(id(global_timer)[num_timer][i]);
-            ESP_LOGD("onSelect", "------ Loop # %i value %i (switch) ------", i, id(global_timer)[num_timer][i]);
+            // ESP_LOGD("onSelect", "------ Loop # %i value %i (switch) ------", i, id(global_timer)[num_timer][i]);
         }
         // set all the Number states
         for (uint8_t i = 0; i < 7; i++) {
             (*numbers[i])->publish_state(id(global_timer)[num_timer][10 + i]);
-            ESP_LOGD("onSelect", "------ Loop # %i value %i (number) ------", 10 + i, id(global_timer)[num_timer][10 + i]);
+            // ESP_LOGD("onSelect", "------ Loop # %i value %i (number) ------", 10 + i, id(global_timer)[num_timer][10 + i]);
         }
     } else {
         // no timer set all switches off
@@ -335,14 +344,14 @@ void onPressSave() {
         // set the 10 switches states
         for (uint8_t i = 0; i < 10; i++) {
             id(global_timer)[num_timer][i] = (*switches[i])->state;
-            ESP_LOGD("onPressSave", "------ save Loop Number %i value %i (switch) ------", i, id(global_timer)[num_timer][i]);
+            // ESP_LOGD("onPressSave", "------ save Loop Number %i value %i (switch) ------", i, id(global_timer)[num_timer][i]);
         }
         // set the 7 number states (in the global array we start at 10)
         for (uint8_t i = 0; i < 7; i++) {
-            id(global_timer)[num_timer][10 + i] = (int)(*numbers[i])->state;
-            ESP_LOGD("onPressSave", "------ save Loop Number %i value %d (number) ------", 10 + i, (*numbers[i])->state);
+            id(global_timer)[num_timer][10 + i] = (*numbers[i])->state;
+            // ESP_LOGD("onPressSave", "------ save Loop Number %i value %d (number) ------", 10 + i, (*numbers[i])->state);
         }
     }
     // timer settings changed reset timestamps
-    setTimestamps();
+    setTimestamps(num_timer);
 } // onPressSave
